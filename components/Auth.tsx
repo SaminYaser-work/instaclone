@@ -13,25 +13,21 @@ import {
   GlobalDispatch,
 } from "../state/context/GlobalContextProvider";
 import { auth, db } from "../lib/firebase";
-import { ActionTypesEnum, actionType } from "../types/GRTypes";
+import { ActionTypesEnum } from "../types/GRTypes";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import { toast } from "react-hot-toast";
-
-const fetchData = async (email: string) => {
-  const docRef = doc(db, "cities", "SF");
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    console.log("Document data:", docSnap.data());
-  } else {
-    // doc.data() will be undefined in this case
-    console.log("No such document!");
-  }
-};
 
 const Auth: NextPage = () => {
   useEffect(() => {
@@ -42,11 +38,78 @@ const Auth: NextPage = () => {
   const dispatch = useContext(GlobalDispatch);
 
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isOF, setIsOF] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const fetchData = async (email: string) => {
+    const docRef = doc(db, "users", email);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      console.log("Document data:", docSnap.data());
+      dispatch({
+        type: ActionTypesEnum.SET_IS_ONBOARDED,
+        payload: {
+          isOnboarded: true,
+        },
+      });
+      dispatch({
+        type: ActionTypesEnum.SET_USER,
+        payload: {
+          user: docSnap.data(),
+        },
+      });
+    } else {
+      // doc.data() will be undefined in this case
+      console.log("User is not onboarded");
+      toast("You are almost there!");
+      setIsOF(true);
+      setFormData({
+        email: "",
+        password: "",
+      });
+    }
+  };
+
+  const handleOFSubmit = async (e: MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+    console.log("Onboarding form submission.");
+
+    try {
+      const userCol = collection(db, "users");
+      const q = query(userCol, where("username", "==", formData.email));
+
+      const userSnapshot = await getDocs(q);
+
+      if (userSnapshot.docs.length > 0) {
+        return toast.error("Username is taken! Try another one.");
+      }
+
+      await setDoc(doc(db, "users", auth.currentUser?.email!), {
+        username: formData.email,
+        full_name: formData.password,
+      });
+
+      toast.success("You are registered to Instaclone!");
+
+      setIsOF(false);
+
+      dispatch({
+        type: ActionTypesEnum.SET_IS_ONBOARDED,
+        payload: {
+          isOnboarded: true,
+        },
+      });
+    } catch (e) {
+      console.log(e);
+      toast.error("Something went wrong!");
+    }
+    // console.log("Document written with ID: ", docRef.id);
+  };
 
   const handleSubmit = async (e: MouseEvent<HTMLElement>) => {
     e.preventDefault();
@@ -65,50 +128,19 @@ const Auth: NextPage = () => {
           const user = userCredentials.user;
           console.log(user);
           toast.success("Signed up successfully!");
-
-          dispatch({
-            type: ActionTypesEnum.SET_USER,
-            payload: {
-              user,
-            },
-          });
-
-          dispatch({
-            type: ActionTypesEnum.SET_LOADING,
-            payload: {
-              isLoading: false,
-            },
-          });
-          dispatch({
-            type: ActionTypesEnum.SET_ERROR,
-            payload: {
-              isError: false,
-            },
-          });
         })
+        .then(() => fetchData(auth.currentUser?.email!))
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
           console.log(errorCode, errorMessage);
           toast.error(errorMessage);
-
-          dispatch({
-            type: ActionTypesEnum.SET_USER,
-            payload: {
-              user: {},
-            },
-          });
-
+        })
+        .finally(() => {
           dispatch({
             type: ActionTypesEnum.SET_LOADING,
             payload: {
               isLoading: false,
-            },
-          });
-          dispatch({
-            type: ActionTypesEnum.SET_ERROR,
-            payload: {
-              isError: true,
             },
           });
         });
@@ -118,50 +150,19 @@ const Auth: NextPage = () => {
         .then((userCredentials) => {
           const user = userCredentials.user;
           console.log(user);
-
-          dispatch({
-            type: ActionTypesEnum.SET_USER,
-            payload: {
-              user,
-            },
-          });
-
-          dispatch({
-            type: ActionTypesEnum.SET_LOADING,
-            payload: {
-              isLoading: false,
-            },
-          });
-          dispatch({
-            type: ActionTypesEnum.SET_ERROR,
-            payload: {
-              isError: false,
-            },
-          });
         })
+        .then(() => fetchData(auth.currentUser?.email!))
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
           toast.error(errorMessage);
           console.log(errorCode, errorMessage);
-
-          dispatch({
-            type: ActionTypesEnum.SET_USER,
-            payload: {
-              user: {},
-            },
-          });
-
+        })
+        .finally(() => {
           dispatch({
             type: ActionTypesEnum.SET_LOADING,
             payload: {
               isLoading: false,
-            },
-          });
-          dispatch({
-            type: ActionTypesEnum.SET_ERROR,
-            payload: {
-              isError: true,
             },
           });
         });
@@ -203,29 +204,30 @@ const Auth: NextPage = () => {
                 className="mt-16 mb-10 mx-auto"
               />
               <input
-                type="email"
+                type={isOF ? "text" : "email"}
                 name="email"
-                placeholder="Email"
+                placeholder={isOF ? "Username" : "Email"}
                 value={formData.email}
                 onChange={onChangeHandler}
                 className="border border-gray-300 outline-none bg-gray-50 focus:bg-white rounded-md px-5 py-2 text-xl w-4/5"
               />
               <input
-                type="password"
+                type={isOF ? "text" : "password"}
                 name="password"
                 onChange={onChangeHandler}
-                placeholder="Password"
+                placeholder={isOF ? "Full Name" : "Password"}
                 value={formData.password}
                 className="border border-gray-300 outline-none bg-gray-50 focus:bg-white rounded-lg px-5 py-2 text-xl w-4/5"
               />
               <Button
                 children={
                   (isLoading && "Please Wait...") ||
+                  (isOF && "Let's go!") ||
                   (isSignUp ? "Sign Up" : "Login")
                 }
                 type="submit"
                 disabled={formData.email === "" || formData.password === ""}
-                clickHandler={handleSubmit}
+                clickHandler={isOF ? handleOFSubmit : handleSubmit}
                 className="px-4 py-2 bg-[#0095f6] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed rounded-lg text-white active:scale-95 transform transition w-4/5 text-2xl font-semibold"
               />
             </form>
@@ -249,6 +251,7 @@ const Auth: NextPage = () => {
             <p
               className="cursor-pointer"
               onClick={(e: MouseEvent<HTMLParagraphElement>) => {
+                setIsOF(false);
                 setIsSignUp((prev) => !prev);
               }}
             >

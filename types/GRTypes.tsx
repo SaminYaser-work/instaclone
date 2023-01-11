@@ -1,3 +1,5 @@
+import { DocumentData } from "firebase/firestore";
+
 export enum ActionTypesEnum {
   SET_USER,
   SET_LOADING,
@@ -9,6 +11,7 @@ export enum ActionTypesEnum {
 export type actionType = {
   type: ActionTypesEnum;
   payload: {
+    user?: DocumentData;
     isLoading?: boolean;
     isAuthenticated?: boolean;
     isOnboarded?: boolean;

@@ -10,8 +10,42 @@ import { FiCompass } from "react-icons/fi";
 import { IoPersonCircleOutline } from "react-icons/io5";
 import Link from "next/link";
 import Button from "./Button";
+import { useContext } from "react";
+import { GlobalDispatch } from "../state/context/GlobalContextProvider";
+import { ActionTypesEnum } from "../types/GRTypes";
+import { auth } from "../lib/firebase";
+import { signOut } from "firebase/auth";
 
 export default function NavBar() {
+  const dispatch = useContext(GlobalDispatch);
+
+  const logout = () => {
+    signOut(auth)
+      .then(() => {
+        dispatch({
+          type: ActionTypesEnum.SET_LOADING,
+          payload: {
+            isLoading: false,
+          },
+        });
+        dispatch({
+          type: ActionTypesEnum.SET_IS_AUTHENTICATED,
+          payload: {
+            isAuthenticated: false,
+          },
+        });
+        dispatch({
+          type: ActionTypesEnum.SET_IS_ONBOARDED,
+          payload: {
+            isOnboarded: false,
+          },
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
   return (
     <nav className="flex py-3 items-center justify-around gap-10 fixed top-0 left-0 w-screen bg-white shadow-xl">
       <Link href={"/"}>
@@ -48,7 +82,7 @@ export default function NavBar() {
           children={"Logout"}
           type="button"
           disabled={false}
-          clickHandler={() => console.log("clicked")}
+          clickHandler={logout}
           className="px-4 py-2 bg-[#0095f6] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed rounded-lg text-white active:scale-95 transform transition text-2xl font-semibold"
         />
       </div>

@@ -8,6 +8,8 @@ import { GlobalContext } from "../state/context/GlobalContextProvider";
 const Home: NextPage = () => {
   const { isAuthenticated, isOnboarded } = useContext(GlobalContext);
 
+  console.log(isAuthenticated, isOnboarded);
+
   return (
     <>
       <Head>

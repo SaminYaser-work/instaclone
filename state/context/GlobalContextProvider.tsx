@@ -7,8 +7,9 @@ import React, {
 } from "react";
 import GlobalReducer from "../reducers/GlobalReducer";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 import { ActionTypesEnum } from "../../types/GRTypes";
+import { doc, getDoc } from "firebase/firestore";
 
 type authCtxType = {
   user: object;
@@ -45,7 +46,43 @@ const GlobalContextProvider = ({ children }: Props) => {
           type: ActionTypesEnum.SET_IS_AUTHENTICATED,
           payload: { isAuthenticated: true },
         });
-        const uid = user.uid;
+        // const uid = user.uid;
+
+        dispatch({
+          type: ActionTypesEnum.SET_LOADING,
+          payload: { isLoading: true },
+        });
+
+        const fetchData = async (email: string | null) => {
+          if (!email) return;
+          const docRef = doc(db, "users", email);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            console.log("Document data:", docSnap.data());
+            dispatch({
+              type: ActionTypesEnum.SET_IS_ONBOARDED,
+              payload: {
+                isOnboarded: true,
+              },
+            });
+            dispatch({
+              type: ActionTypesEnum.SET_USER,
+              payload: {
+                user: docSnap.data(),
+              },
+            });
+          } else {
+            // doc.data() will be undefined in this case
+            console.log("User is not onboarded");
+            dispatch({
+              type: ActionTypesEnum.SET_LOADING,
+              payload: { isLoading: false },
+            });
+          }
+        };
+
+        fetchData(user?.email);
       }
     });
 
