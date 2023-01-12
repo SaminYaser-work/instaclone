@@ -26,6 +26,7 @@ import {
   where,
   getDocs,
   setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 
@@ -92,6 +93,8 @@ const Auth: NextPage = () => {
       await setDoc(doc(db, "users", auth.currentUser?.email!), {
         username: formData.email,
         full_name: formData.password,
+        email: auth.currentUser?.email,
+        createdAt: serverTimestamp(),
       });
 
       toast.success("You are registered to Instaclone!");

@@ -6,6 +6,7 @@ export enum ActionTypesEnum {
   SET_IS_AUTHENTICATED,
   SET_IS_ONBOARDED,
   SET_ERROR,
+  SET_IS_UPLOAD_MODAL_OPEN,
 }
 
 export type actionType = {
@@ -16,5 +17,6 @@ export type actionType = {
     isAuthenticated?: boolean;
     isOnboarded?: boolean;
     isError?: boolean;
+    isUploadModalOpen?: boolean;
   };
 };

@@ -6,9 +6,10 @@ import { useContext, useState } from "react";
 import { GlobalContext } from "../state/context/GlobalContextProvider";
 
 const Home: NextPage = () => {
-  const { isAuthenticated, isOnboarded } = useContext(GlobalContext);
+  const { isAuthenticated, isOnboarded, isUploadModalOpen } =
+    useContext(GlobalContext);
 
-  console.log(isAuthenticated, isOnboarded);
+  console.log(isAuthenticated, isOnboarded, isUploadModalOpen);
 
   return (
     <>

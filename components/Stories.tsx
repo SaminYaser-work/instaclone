@@ -6,7 +6,7 @@ export default function Stories() {
       {new Array(20).fill(0).map((_, i) => (
         <div key={i} className="py-4 border-b border-gray-300 shrink-0">
           <Image
-            src="https://picsum.photos/100"
+            src={`https://picsum.photos/20?random=${i}.webp`}
             alt="profile"
             className="w-10 h-10 rounded-full ring-[2px] ring-pink-500 ring-offset-2"
             width={100}

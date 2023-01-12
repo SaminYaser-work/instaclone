@@ -9,14 +9,15 @@ import GlobalReducer from "../reducers/GlobalReducer";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../lib/firebase";
 import { ActionTypesEnum } from "../../types/GRTypes";
-import { doc, getDoc } from "firebase/firestore";
+import { DocumentData, doc, getDoc } from "firebase/firestore";
 
 type authCtxType = {
-  user: object;
+  user: DocumentData;
   isAuthenticated: boolean;
   isOnboarded: boolean;
   isLoading: boolean;
   isError: boolean;
+  isUploadModalOpen: boolean;
 };
 
 const initialState: authCtxType = {
@@ -25,6 +26,7 @@ const initialState: authCtxType = {
   isOnboarded: false,
   isLoading: false,
   isError: false,
+  isUploadModalOpen: false,
 };
 
 export const GlobalContext = createContext<authCtxType>(initialState);

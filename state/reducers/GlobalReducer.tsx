@@ -30,7 +30,13 @@ export default function GlobalReducer(state: any, action: actionType) {
         isError: action.payload.isError,
       };
 
+    case ActionTypesEnum.SET_IS_UPLOAD_MODAL_OPEN:
+      return {
+        ...state,
+        isUploadModalOpen: action.payload.isUploadModalOpen,
+      };
+
     default:
-      throw Error("Unknown action: ", action.type);
+      throw Error("Unknown action: " + action.type);
   }
 }
