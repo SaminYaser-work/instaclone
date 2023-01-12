@@ -3,12 +3,10 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBhNgN00pFRybJMgeoMftWmZ6ouLKVlOOc",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API,
   authDomain: "instaclone-41289.firebaseapp.com",
   projectId: "instaclone-41289",
   storageBucket: "instaclone-41289.appspot.com",
