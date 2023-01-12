@@ -181,7 +181,7 @@ const Auth: NextPage = () => {
 
   return (
     <div className="w-screen h-screen flex items-center justify-center">
-      <div className="flex w-4/6">
+      <div className="flex w-full md:w-4/6">
         <div className="w-full hidden md:block">
           <lottie-player
             id="firstLottie"
@@ -194,7 +194,7 @@ const Auth: NextPage = () => {
         </div>
 
         <div className="w-full">
-          <div className=" bg-white border border-gray-300 shadow-md rounded-md">
+          <div className=" bg-white md:border md:border-gray-300 md:shadow-md rounded-md">
             <form
               action=""
               className="flex flex-col justify-start items-center gap-5"
