@@ -92,6 +92,8 @@ export default function UploadModal() {
           createdAt: serverTimestamp(),
           username: user.user.username,
           email: auth.currentUser?.email,
+          likes: [],
+          comments: [],
         };
         await setDoc(postRef, post);
 
