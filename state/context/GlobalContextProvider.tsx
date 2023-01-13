@@ -74,6 +74,13 @@ const GlobalContextProvider = ({ children }: Props) => {
                 user: docSnap.data(),
               },
             });
+
+            dispatch({
+              type: ActionTypesEnum.SET_LOADING,
+              payload: {
+                isLoading: false,
+              },
+            });
           } else {
             // doc.data() will be undefined in this case
             console.log("User is not onboarded");
