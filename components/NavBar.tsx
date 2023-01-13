@@ -18,6 +18,7 @@ import {
 import { ActionTypesEnum } from "../types/GRTypes";
 import { auth } from "../lib/firebase";
 import { signOut } from "firebase/auth";
+import { SlLogout } from "react-icons/sl";
 
 export default function NavBar() {
   const dispatch = useContext(GlobalDispatch);
@@ -77,13 +78,23 @@ export default function NavBar() {
             className="cursor-pointer"
           />
         </Link>
-        <Button
+        <div className="flex justify-center items-center gap-5">
+          <AiOutlinePlusCircle
+            onClick={handleOpenModal}
+            className="hover:text-gray-500 cursor-pointer transition text-3xl ease-linear"
+          />
+          <SlLogout
+            className="hover:text-gray-500 cursor-pointer transition text-3xl ease-linear"
+            onClick={logout}
+          />
+        </div>
+        {/* <Button
           children={"Logout"}
           type="button"
           disabled={false}
           clickHandler={logout}
           className="md:hidden px-4 py-2 bg-[#0095f6] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed rounded-lg text-white active:scale-95 transform transition text-2xl font-semibold"
-        />
+        /> */}
       </div>
       <div className="hidden md:flex items-center group focus-within:border-black focus-within:bg-white justify-start gap-5 border border-gray-300 bg-gray-50 focus:bg-white rounded-md px-5 py-2">
         <label htmlFor="search">

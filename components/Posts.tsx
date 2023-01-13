@@ -74,7 +74,7 @@ type Post = {
   id: string;
   key: number;
   createdAt: {
-    seconds: string | number;
+    seconds: number;
   };
 };
 
@@ -111,10 +111,19 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
     });
 
     const commentRef = collection(db, `comments`);
-    const q2 = query(commentRef, where("postId", "==", id));
+    const q2 = query(
+      commentRef,
+      where("postId", "==", id),
+      orderBy("createdAt")
+    );
 
     const unsub2 = onSnapshot(q2, (snapshot) => {
-      const comms = snapshot.docs.map((doc) => doc.data());
+      let comms = snapshot.docs.map((doc) => doc.data());
+
+      // comms.sort((a: DocumentData, b: DocumentData) => {
+      //   return a.createdAt.seconds - b.createdAt.seconds;
+      // });
+
       setComments(comms);
       console.log("Comment data: ", comms);
     });
@@ -195,7 +204,15 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
             height={100}
           />
         </div>
-        <div>{username}</div>
+        <div className="flex flex-col justify-center items-start">
+          <p className="text-xl">{username}</p>
+          {/* <p className="text-md text-gray-400">
+            {Math.floor(
+              new Date().getTime() -
+                new Date(createdAt.seconds * 1000).getTime()
+            )}
+          </p> */}
+        </div>
         <div className="ml-auto text-2xl">
           <BsThreeDots className="cursor-pointer" onClick={todo} />
         </div>
@@ -248,16 +265,13 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
             <div className="font-bold self-start">{username}</div>
             <div className="truncate">{caption}</div>
           </div>
+          <div className="text-gray-400 mt-3">Comments</div>
           {comments?.map((comment: any, i: number) => (
             <RenderComments
               username={comment.username}
               comment={comment.comment}
             />
           ))}
-        </div>
-
-        <div>
-          <p className="text-lg text-gray-400">{createdAt.seconds}</p>
         </div>
       </div>
 
@@ -292,12 +306,9 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
 
 function RenderComments({ username, comment }: Comment) {
   return (
-    <>
-      <div className="text-gray-400 mt-3">Comments</div>
-      <div className="flex items-center justify-start gap-3 w-[90%]">
-        <div className="font-bold self-start">{username}</div>
-        <div className="truncate">{comment}</div>
-      </div>
-    </>
+    <div className="flex items-center justify-start gap-3 w-[90%]">
+      <div className="font-bold self-start">{username}</div>
+      <div className="truncate">{comment}</div>
+    </div>
   );
 }

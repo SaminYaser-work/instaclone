@@ -15,7 +15,7 @@ export default function Feed() {
           <Posts />
         </main>
 
-        <aside className="hidden md:block col-span-1 bg-red-400 place-self-start">
+        <aside className="hidden col-span-1 bg-red-400 place-self-start">
           <p>
             Lorem ipsum dolor sit, amet consectetur adipisicing elit. Provident
             beatae voluptas numquam odit quidem iure sed ipsa, placeat
