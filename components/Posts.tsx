@@ -1,17 +1,20 @@
 import {
   DocumentData,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import Image from "next/image";
 import {
   FormEvent,
+  Fragment,
   MouseEvent,
   useContext,
   useEffect,
@@ -25,6 +28,7 @@ import { auth, db } from "../lib/firebase";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 import { GlobalContext } from "../state/context/GlobalContextProvider";
 import { toast } from "react-hot-toast";
+import { Menu, Transition } from "@headlessui/react";
 
 export default function Posts() {
   const [posts, setPosts] = useState<DocumentData[]>();
@@ -91,7 +95,9 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
   const [isLiked, setIsLiked] = useState(false);
   const [numLikes, setNumLikes] = useState(0);
   const [comments, setComments] = useState<any>();
+  const [isEditing, setIsEditing] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
+  const captionEditRef = useRef<HTMLInputElement>(null);
 
   const { user } = useContext(GlobalContext);
 
@@ -119,10 +125,6 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
 
     const unsub2 = onSnapshot(q2, (snapshot) => {
       let comms = snapshot.docs.map((doc) => doc.data());
-
-      // comms.sort((a: DocumentData, b: DocumentData) => {
-      //   return a.createdAt.seconds - b.createdAt.seconds;
-      // });
 
       setComments(comms);
       console.log("Comment data: ", comms);
@@ -189,6 +191,31 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
     }
   };
 
+  const handleDelete = async () => {
+    const postRef = doc(db, `posts/${id}`);
+    try {
+      await deleteDoc(postRef);
+      location.reload();
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong. Unable to delete the post.");
+    }
+  };
+
+  const updateCaption = async () => {
+    const postRef = doc(db, `posts/${id}`);
+    try {
+      await updateDoc(postRef, {
+        caption: captionEditRef.current!.value,
+      });
+      setIsEditing(false);
+      toast.success("Post edited successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error("Something went wrong. Unable to edit the post.");
+    }
+  };
+
   return (
     <div
       key={key}
@@ -213,9 +240,15 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
             )}
           </p> */}
         </div>
-        <div className="ml-auto text-2xl">
-          <BsThreeDots className="cursor-pointer" onClick={todo} />
-        </div>
+
+        {user.user.username === username && (
+          <div className="ml-auto cursor-pointer">
+            <DropDownMenu
+              handleDelete={handleDelete}
+              handleEdit={() => setIsEditing(true)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="w-full">
@@ -263,7 +296,39 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
         <div className="">
           <div className="flex items-center justify-start gap-3 w-[90%]">
             <div className="font-bold self-start">{username}</div>
-            <div className="truncate">{caption}</div>
+            <div className="flex justify-center items-center gap-5">
+              <label htmlFor="caption" hidden>
+                caption
+              </label>
+              <input
+                ref={captionEditRef}
+                type="text"
+                name="caption"
+                id="caption"
+                className="bg-transparent focus:outline-none placeholder-black border border-gray-400 disabled:border-transparent rounded-md px-1"
+                disabled={!isEditing}
+                placeholder={caption}
+              />
+              {isEditing && (
+                <div>
+                  <button
+                    className={`text-blue-400 font-bold mr-3`}
+                    onClick={updateCaption}
+                  >
+                    Done
+                  </button>
+                  <button
+                    className={`text-red-400 font-bold`}
+                    onClick={() => {
+                      setIsEditing(false);
+                      captionEditRef.current!.value = "";
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="text-gray-400 mt-3">Comments</div>
           {comments?.map((comment: any, i: number) => (
@@ -288,8 +353,6 @@ function RenderPost({ username, image, caption, key, createdAt, id }: Post) {
           ref={commentInputRef}
           name="comment"
           placeholder="Add a comment"
-          // value={formData.email}
-          // onChange={onChangeHandler}
           className=" outline-none bg-transparent text-xl flex-1"
         />
         <button
@@ -310,5 +373,300 @@ function RenderComments({ username, comment }: Comment) {
       <div className="font-bold self-start">{username}</div>
       <div className="truncate">{comment}</div>
     </div>
+  );
+}
+
+function DropDownMenu({
+  handleEdit,
+  handleDelete,
+}: {
+  handleEdit: () => void;
+  handleDelete: () => void;
+}) {
+  return (
+    <Menu as="div" className="relative inline-block text-left">
+      <div>
+        <Menu.Button className="">
+          <BsThreeDots className="text-2xl text-black" />
+        </Menu.Button>
+      </div>
+      <Transition
+        as={Fragment}
+        enter="transition ease-out duration-100"
+        enterFrom="transform opacity-0 scale-95"
+        enterTo="transform opacity-100 scale-100"
+        leave="transition ease-in duration-75"
+        leaveFrom="transform opacity-100 scale-100"
+        leaveTo="transform opacity-0 scale-95"
+      >
+        <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <Menu.Item>
+            {({ active }) => (
+              <button
+                onClick={handleEdit}
+                className={`${
+                  active ? "bg-violet-500 text-white" : "text-gray-900"
+                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+              >
+                {active ? (
+                  <EditActiveIcon className="mr-2 h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <EditInactiveIcon
+                    className="mr-2 h-5 w-5"
+                    aria-hidden="true"
+                  />
+                )}
+                Edit
+              </button>
+            )}
+          </Menu.Item>
+          <Menu.Item>
+            {({ active }) => (
+              <button
+                onClick={handleDelete}
+                className={`${
+                  active ? "bg-blue-500 text-white" : "text-gray-900"
+                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+              >
+                {active ? (
+                  <DeleteActiveIcon
+                    className="mr-2 h-5 w-5 text-blue-400"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <DeleteInactiveIcon
+                    className="mr-2 h-5 w-5 text-blue-400"
+                    aria-hidden="true"
+                  />
+                )}
+                Delete
+              </button>
+            )}
+          </Menu.Item>
+        </Menu.Items>
+      </Transition>
+    </Menu>
+  );
+}
+
+function EditInactiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 13V16H7L16 7L13 4L4 13Z"
+        fill="#EDE9FE"
+        stroke="#A78BFA"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function EditActiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 13V16H7L16 7L13 4L4 13Z"
+        fill="#8B5CF6"
+        stroke="#C4B5FD"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function DuplicateInactiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 4H12V12H4V4Z"
+        fill="#EDE9FE"
+        stroke="#A78BFA"
+        strokeWidth="2"
+      />
+      <path
+        d="M8 8H16V16H8V8Z"
+        fill="#EDE9FE"
+        stroke="#A78BFA"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function DuplicateActiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 4H12V12H4V4Z"
+        fill="#8B5CF6"
+        stroke="#C4B5FD"
+        strokeWidth="2"
+      />
+      <path
+        d="M8 8H16V16H8V8Z"
+        fill="#8B5CF6"
+        stroke="#C4B5FD"
+        strokeWidth="2"
+      />
+    </svg>
+  );
+}
+
+function ArchiveInactiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="5"
+        y="8"
+        width="10"
+        height="8"
+        fill="#EDE9FE"
+        stroke="#A78BFA"
+        strokeWidth="2"
+      />
+      <rect
+        x="4"
+        y="4"
+        width="12"
+        height="4"
+        fill="#EDE9FE"
+        stroke="#A78BFA"
+        strokeWidth="2"
+      />
+      <path d="M8 12H12" stroke="#A78BFA" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function ArchiveActiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="5"
+        y="8"
+        width="10"
+        height="8"
+        fill="#8B5CF6"
+        stroke="#C4B5FD"
+        strokeWidth="2"
+      />
+      <rect
+        x="4"
+        y="4"
+        width="12"
+        height="4"
+        fill="#8B5CF6"
+        stroke="#C4B5FD"
+        strokeWidth="2"
+      />
+      <path d="M8 12H12" stroke="#A78BFA" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function MoveInactiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M10 4H16V10" stroke="#A78BFA" strokeWidth="2" />
+      <path d="M16 4L8 12" stroke="#A78BFA" strokeWidth="2" />
+      <path d="M8 6H4V16H14V12" stroke="#A78BFA" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function MoveActiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M10 4H16V10" stroke="#C4B5FD" strokeWidth="2" />
+      <path d="M16 4L8 12" stroke="#C4B5FD" strokeWidth="2" />
+      <path d="M8 6H4V16H14V12" stroke="#C4B5FD" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function DeleteInactiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="5"
+        y="6"
+        width="10"
+        height="10"
+        fill="#EDE9FE"
+        stroke="#A78BFA"
+        strokeWidth="2"
+      />
+      <path d="M3 6H17" stroke="#A78BFA" strokeWidth="2" />
+      <path d="M8 6V4H12V6" stroke="#A78BFA" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function DeleteActiveIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="5"
+        y="6"
+        width="10"
+        height="10"
+        fill="#8B5CF6"
+        stroke="#C4B5FD"
+        strokeWidth="2"
+      />
+      <path d="M3 6H17" stroke="#C4B5FD" strokeWidth="2" />
+      <path d="M8 6V4H12V6" stroke="#C4B5FD" strokeWidth="2" />
+    </svg>
   );
 }

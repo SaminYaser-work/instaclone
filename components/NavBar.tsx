@@ -78,7 +78,7 @@ export default function NavBar() {
             className="cursor-pointer"
           />
         </Link>
-        <div className="flex justify-center items-center gap-5">
+        <div className="flex justify-center items-center gap-5 md:hidden">
           <AiOutlinePlusCircle
             onClick={handleOpenModal}
             className="hover:text-gray-500 cursor-pointer transition text-3xl ease-linear"
